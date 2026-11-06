@@ -1,0 +1,933 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Super-Quest: Terminale Spécialité Mathématiques</title>
+    <style>
+        :root {
+            --bg-dark: #0f172a;
+            --bg-card: #1e293b;
+            --text-main: #f8fafc;
+            --text-muted: #94a3b8;
+            --primary: #3b82f6;
+            --primary-hover: #2563eb;
+            --accent: #8b5cf6;
+            --success: #10b981;
+            --warning: #f59e0b;
+            --danger: #ef4444;
+            --border: #334155;
+        }
+
+        * {
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            background-color: var(--bg-dark);
+            color: var(--text-main);
+            line-height: 1.6;
+            min-height: 100vh;
+        }
+
+        /* Шапка (HUD) */
+        header {
+            background-color: rgba(30, 41, 59, 0.9);
+            backdrop-filter: blur(10px);
+            padding: 15px 30px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .logo {
+            font-size: 20px;
+            font-weight: bold;
+            color: var(--primary);
+            text-shadow: 0 0 10px rgba(59, 130, 246, 0.5);
+        }
+
+        .stats {
+            display: flex;
+            gap: 20px;
+            font-size: 18px;
+            font-weight: bold;
+        }
+
+        .stat-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            background: var(--bg-card);
+            padding: 5px 15px;
+            border-radius: 20px;
+            border: 1px solid var(--border);
+        }
+
+        /* Контейнер */
+        .container {
+            max-width: 1200px;
+            margin: 30px auto;
+            padding: 0 20px;
+        }
+
+        .block-title {
+            font-size: 24px;
+            margin: 40px 0 20px 0;
+            color: var(--accent);
+            border-bottom: 2px solid var(--border);
+            padding-bottom: 10px;
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+            gap: 20px;
+        }
+
+        /* Карточка-Земля */
+        .card {
+            background: var(--bg-card);
+            border-radius: 12px;
+            border: 1px solid var(--border);
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            transition: transform 0.3s, box-shadow 0.3s;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 25px rgba(0,0,0,0.4);
+            border-color: var(--primary);
+        }
+
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 15px;
+        }
+
+        .card h3 {
+            font-size: 18px;
+            color: var(--text-main);
+            margin: 0;
+            padding-right: 10px;
+        }
+
+        /* Блок теории (Спойлер) */
+        details {
+            background: #0f172a;
+            border-radius: 8px;
+            margin-bottom: 15px;
+            border: 1px solid var(--border);
+            overflow: hidden;
+        }
+
+        summary {
+            padding: 10px 15px;
+            cursor: pointer;
+            font-weight: bold;
+            color: var(--primary);
+            list-style: none;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            transition: background 0.2s;
+        }
+
+        summary:hover {
+            background: #1e293b;
+        }
+
+        summary::after {
+            content: '▼';
+            font-size: 12px;
+            transition: transform 0.3s;
+        }
+
+        details[open] summary::after {
+            transform: rotate(180deg);
+        }
+
+        .theory-content {
+            padding: 15px;
+            font-size: 14px;
+            color: var(--text-muted);
+            border-top: 1px solid var(--border);
+        }
+
+        .theory-content ul {
+            padding-left: 20px;
+            margin-top: 10px;
+        }
+
+        .theory-content li {
+            margin-bottom: 8px;
+        }
+
+        /* Кнопка квеста */
+        .btn-quest {
+            background: linear-gradient(135deg, var(--primary), var(--accent));
+            color: white;
+            border: none;
+            padding: 12px;
+            border-radius: 8px;
+            font-weight: bold;
+            cursor: pointer;
+            font-size: 16px;
+            margin-top: auto;
+            transition: opacity 0.2s, transform 0.1s;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 10px;
+            width: 100%;
+        }
+
+        .btn-quest:hover {
+            opacity: 0.9;
+            transform: scale(1.02);
+        }
+
+        /* Модальное окно (Квест) */
+        .modal-overlay {
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(0, 0, 0, 0.8);
+            backdrop-filter: blur(5px);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+            padding: 20px;
+        }
+
+        .modal-content {
+            background: var(--bg-card);
+            border-radius: 16px;
+            width: 100%;
+            max-width: 700px;
+            border: 1px solid var(--border);
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            max-height: 90vh;
+        }
+
+        .modal-header {
+            background: #0f172a;
+            padding: 20px;
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .modal-header h2 {
+            font-size: 20px;
+            margin: 0;
+            color: var(--primary);
+        }
+
+        .close-btn {
+            background: none;
+            border: none;
+            color: var(--text-muted);
+            font-size: 28px;
+            cursor: pointer;
+            transition: color 0.2s;
+            line-height: 1;
+        }
+
+        .close-btn:hover {
+            color: var(--danger);
+        }
+
+        .modal-body {
+            padding: 20px;
+            overflow-y: auto;
+        }
+
+        /* Табы уровней */
+        .level-tabs {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        .level-tab {
+            flex: 1;
+            padding: 10px;
+            text-align: center;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: bold;
+            border: 2px solid var(--border);
+            background: #0f172a;
+            color: var(--text-muted);
+            transition: all 0.2s;
+            font-size: 14px;
+        }
+
+        .level-tab.active[data-level="facile"] { border-color: var(--success); color: var(--success); background: rgba(16, 185, 129, 0.1); }
+        .level-tab.active[data-level="moyen"] { border-color: var(--warning); color: var(--warning); background: rgba(245, 158, 11, 0.1); }
+        .level-tab.active[data-level="difficile"] { border-color: var(--danger); color: var(--danger); background: rgba(239, 68, 68, 0.1); }
+
+        /* Задания */
+        .question-box {
+            background: #0f172a;
+            padding: 20px;
+            border-radius: 12px;
+            margin-bottom: 20px;
+            border: 1px solid var(--border);
+        }
+
+        .question-header {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 15px;
+            font-size: 12px;
+            color: var(--text-muted);
+        }
+
+        .question-text {
+            font-size: 16px;
+            margin-bottom: 15px;
+            line-height: 1.5;
+        }
+
+        .options {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .option-btn {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            color: var(--text-main);
+            padding: 12px 15px;
+            border-radius: 8px;
+            text-align: left;
+            cursor: pointer;
+            font-size: 15px;
+            transition: all 0.2s;
+        }
+
+        .option-btn:hover:not(:disabled) {
+            border-color: var(--primary);
+            background: rgba(59, 130, 246, 0.1);
+        }
+
+        .option-btn.correct {
+            background: rgba(16, 185, 129, 0.2);
+            border-color: var(--success);
+            color: var(--success);
+        }
+
+        .option-btn.wrong {
+            background: rgba(239, 68, 68, 0.2);
+            border-color: var(--danger);
+            color: var(--danger);
+        }
+
+        .option-btn:disabled {
+            cursor: not-allowed;
+            opacity: 0.8;
+        }
+
+        .feedback {
+            margin-top: 15px;
+            padding: 15px;
+            border-radius: 8px;
+            font-weight: bold;
+            display: none;
+        }
+
+        .feedback.success {
+            display: block;
+            background: rgba(16, 185, 129, 0.1);
+            color: var(--success);
+            border: 1px solid var(--success);
+            animation: pop 0.3s ease-out;
+        }
+
+        .feedback.error {
+            display: block;
+            background: rgba(239, 68, 68, 0.1);
+            color: var(--danger);
+            border: 1px solid var(--danger);
+            animation: shake 0.4s ease-in-out;
+        }
+
+        .action-btn {
+            margin-top: 15px;
+            padding: 10px 20px;
+            border-radius: 8px;
+            border: none;
+            font-weight: bold;
+            cursor: pointer;
+            width: 100%;
+            transition: background 0.2s;
+        }
+
+        .action-btn.next { background: var(--primary); color: white; }
+        .action-btn.next:hover { background: var(--primary-hover); }
+        .action-btn.retry { background: var(--warning); color: white; }
+        .action-btn.retry:hover { background: #d97706; }
+
+        /* Анимации */
+        @keyframes pop {
+            0% { transform: scale(0.9); opacity: 0; }
+            100% { transform: scale(1); opacity: 1; }
+        }
+
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-5px); }
+            75% { transform: translateX(5px); }
+        }
+
+        .crystals-animation {
+            position: fixed;
+            color: var(--accent);
+            font-weight: bold;
+            font-size: 24px;
+            pointer-events: none;
+            animation: floatUp 1s ease-out forwards;
+            z-index: 2000;
+            text-shadow: 0 2px 10px rgba(0,0,0,0.8);
+            transform: translate(-50%, -50%);
+        }
+
+        @keyframes floatUp {
+            0% { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+            100% { opacity: 0; transform: translate(-50%, -150%) scale(1.5); }
+        }
+
+    </style>
+</head>
+<body>
+
+    <header>
+        <div class="logo">🏰 Tour de la Connaissance (Башня Знаний)</div>
+        <div class="stats">
+            <div class="stat-item">💎 <span id="crystals-display">0</span></div>
+            <div class="stat-item">🏆 <span id="mastery-display">0</span> / 14</div>
+        </div>
+    </header>
+
+    <div class="container" id="app-container">
+        <!-- Карточки генерируются JS -->
+    </div>
+
+    <!-- Модальное окно Квеста -->
+    <div class="modal-overlay" id="quest-modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 id="modal-title">Название Земли</h2>
+                <button class="close-btn" onclick="closeQuest()">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="level-tabs" id="level-tabs">
+                    <div class="level-tab active" data-level="facile" onclick="switchLevel('facile')">🌱 Apprenti (Легкий)</div>
+                    <div class="level-tab" data-level="moyen" onclick="switchLevel('moyen')">⚔️ Compagnon (Средний)</div>
+                    <div class="level-tab" data-level="difficile" onclick="switchLevel('difficile')">🔥 Maître (Сложный)</div>
+                </div>
+                
+                <div id="quest-content">
+                    <!-- Задания -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Глобальный перехватчик ошибок, чтобы страница не была пустой
+        window.onerror = function(msg, url, line) {
+            const container = document.getElementById('app-container');
+            if (container) {
+                container.innerHTML = `<div style="color: #ef4444; padding: 20px; border: 1px solid #ef4444; background: rgba(239,68,68,0.1); border-radius: 8px;">
+                    <h3>⚠️ Ошибка в коде JavaScript</h3>
+                    <p>${msg}</p>
+                    <p>Строка: ${line}</p>
+                </div>`;
+            }
+            return false;
+        };
+
+        // ==========================================
+        // БАЗА ДАННЫХ ПРОГРАММЫ (КВЕСТ)
+        // ==========================================
+        const curriculum = {
+            analyse: {
+                title: "📈 Bloc 1: ANALYSE (Анализ)",
+                chapters: [
+                    {
+                        id: "suites",
+                        title: "Suites (Последовательности)",
+                        theory: `
+                            <strong>Raisonnement par récurrence (Метод индукции):</strong>
+                            <ul>
+                                <li>Initialisation (База): проверка для n=0 или n=1.</li>
+                                <li>Hérédité (Шаг): предполагаем верным для k, доказываем для k+1.</li>
+                            </ul>
+                            <strong>Convergence (Сходимость):</strong> lim(u_n) = L при n→+∞.
+                        `,
+                        exercises: {
+                            facile: [
+                                { q: "Какое свойство используется для доказательства формулы 1+2+...+n = n(n+1)/2?", options: ["Théorème des gendarmes", "Raisonnement par récurrence", "Théorème de bijection"], a: 1 },
+                                { q: "Чему равно 1! (1 факториал)?", options: ["0", "1", "2"], a: 1 }
+                            ],
+                            moyen: [
+                                { q: "Последовательность u_n = 1/n. Чему равен её предел при n→+∞?", options: ["0", "1", "+∞"], a: 0 }
+                            ],
+                            difficile: [
+                                { q: "Если u_n возрастает и ограничена сверху, что можно сказать о её сходимости?", options: ["Она расходится", "Она сходится", "Она колеблется"], a: 1 }
+                            ]
+                        }
+                    },
+                    {
+                        id: "limites",
+                        title: "Limites et continuité (Пределы и непрерывность)",
+                        theory: `
+                            <strong>Théorème des valeurs intermédiaires (TVI):</strong> Если f непрерывна на [a,b] и k между f(a) и f(b), то уравнение f(x)=k имеет решение.<br>
+                            <strong>Asymptote horizontale:</strong> Если lim(x→+∞) f(x) = L, то y=L — асимптота.
+                        `,
+                        exercises: {
+                            facile: [
+                                { q: "lim(x→+∞) (2x^2+3x)/(x^2) равен:", options: ["2", "3", "+∞"], a: 0 }
+                            ],
+                            moyen: [
+                                { q: "Уравнение x^3+x-1=0 на [0,1]. Какая теорема доказывает наличие корня?", options: ["Théorème des gendarmes", "TVI", "Théorème de Pythagore"], a: 1 }
+                            ],
+                            difficile: [
+                                { q: "Функция f(x) = 1/x. Её вертикальная асимптота:", options: ["y=0", "x=0", "x=1"], a: 1 }
+                            ]
+                        }
+                    },
+                    {
+                        id: "derivees",
+                        title: "Dérivation et convexité (Производные и выпуклость)",
+                        theory: `
+                            <strong>Dérivée composée:</strong> (e^u)' = u'e^u; (ln u)' = u'/u.<br>
+                            <strong>Convexité:</strong> f выпукла, если f'' ≥ 0. Точка перегиба (inflexion) — где f'' меняет знак.
+                        `,
+                        exercises: {
+                            facile: [
+                                { q: "Производная f(x) = e^(2x) равна:", options: ["e^(2x)", "2e^(2x)", "2xe^(2x)"], a: 1 }
+                            ],
+                            moyen: [
+                                { q: "Если f''(x) < 0 на интервале, функция:", options: ["Выпукла (convexe)", "Вогнута (concave)", "Линейна"], a: 1 }
+                            ],
+                            difficile: [
+                                { q: "Точка перегиба функции f(x)=x^3 находится в:", options: ["x=0", "x=1", "x=-1"], a: 0 }
+                            ]
+                        }
+                    },
+                    {
+                        id: "logarithme",
+                        title: "Logarithme népérien (Натуральный логарифм)",
+                        theory: `
+                            <strong>Propriétés:</strong> ln(ab) = ln(a) + ln(b).<br>
+                            <strong>Dérivée:</strong> (ln x)' = 1/x.<br>
+                            <strong>Croissance comparée:</strong> lim(x→+∞) (ln x)/x = 0.
+                        `,
+                        exercises: {
+                            facile: [
+                                { q: "ln(e^3) равен:", options: ["e", "3", "1"], a: 1 }
+                            ],
+                            moyen: [
+                                { q: "Решение уравнения ln(x) = 1:", options: ["x=0", "x=1", "x=e"], a: 2 }
+                            ],
+                            difficile: [
+                                { q: "Чему равен предел lim(x→+∞) (ln x)/x^2 ?", options: ["0", "1", "+∞"], a: 0 }
+                            ]
+                        }
+                    }
+                ]
+            },
+            geometrie: {
+                title: "📐 Bloc 2: ALGÈBRE ET GÉOMÉTRIE (Геометрия)",
+                chapters: [
+                    {
+                        id: "combinatoire",
+                        title: "Combinatoire (Комбинаторика)",
+                        theory: `
+                            <strong>Combinaison (Сочетание):</strong> C(n,k) = n! / (k!(n-k)!).<br>
+                            <strong>Principe multiplicatif:</strong> Если выбор A — m способов, B — n способов, то пара (A,B) — m×n.
+                        `,
+                        exercises: {
+                            facile: [
+                                { q: "Сколькими способами выбрать 2 книги из 5?", options: ["10", "20", "5"], a: 0 }
+                            ],
+                            moyen: [
+                                { q: "Чему равно C(5,2)?", options: ["10", "20", "5"], a: 0 }
+                            ],
+                            difficile: [
+                                { q: "Свойство коэффициентов: C(n,k) = ?", options: ["C(n, n-k)", "C(n, k+1)", "C(n-1, k)"], a: 0 }
+                            ]
+                        }
+                    },
+                    {
+                        id: "espace",
+                        title: "Vecteurs et plans (Векторы и плоскости)",
+                        theory: `
+                            <strong>Équation cartésienne:</strong> ax + by + cz + d = 0, где (a,b,c) — нормальный вектор.<br>
+                            <strong>Représentation paramétrique:</strong> x = x0 + at, y = y0 + bt, z = z0 + ct.
+                        `,
+                        exercises: {
+                            facile: [
+                                { q: "Нормальный вектор плоскости 2x - y + 3z = 0:", options: ["(2, -1, 3)", "(2, 1, 3)", "(0, 0, 0)"], a: 0 }
+                            ],
+                            moyen: [
+                                { q: "Условие перпендикулярности векторов u и v:", options: ["u·v = 1", "u·v = 0", "u+v = 0"], a: 1 }
+                            ],
+                            difficile: [
+                                { q: "Расстояние от M(0,0,0) до плоскости x+y+z-3=0:", options: ["1", "√3", "3"], a: 1 }
+                            ]
+                        }
+                    }
+                ]
+            },
+            probabilites: {
+                title: "🎲 Bloc 3: PROBABILITÉS (Вероятности)",
+                chapters: [
+                    {
+                        id: "binomiale",
+                        title: "Loi binomiale (Биномиальное распределение)",
+                        theory: `
+                            <strong>Loi binomiale B(n,p):</strong> P(X=k) = C(n,k) * p^k * (1-p)^(n-k).<br>
+                            <strong>Espérance:</strong> E(X) = np.
+                        `,
+                        exercises: {
+                            facile: [
+                                { q: "Математическое ожидание E(X) для B(10, 0.5):", options: ["5", "10", "2.5"], a: 0 }
+                            ],
+                            moyen: [
+                                { q: "Монета брошена 3 раза. Вероятность ровно 2 орлов:", options: ["1/8", "3/8", "1/2"], a: 1 }
+                            ],
+                            difficile: [
+                                { q: "Дисперсия V(X) для B(n,p) равна:", options: ["np", "np(1-p)", "n(1-p)"], a: 1 }
+                            ]
+                        }
+                    },
+                    {
+                        id: "lgn",
+                        title: "Loi des grands nombres (ЗБЧ)",
+                        theory: `
+                            <strong>Inégalité de Bienaymé-Tchebychev:</strong> P(|X - E(X)| ≥ ε) ≤ V(X) / ε².<br>
+                            <strong>LGN:</strong> Среднее арифметическое стремится к матожиданию.
+                        `,
+                        exercises: {
+                            facile: [
+                                { q: "Что утверждает Закон Больших Чисел?", options: ["Сумма растет", "Среднее стремится к матожиданию", "Дисперсия равна нулю"], a: 1 }
+                            ],
+                            moyen: [
+                                { q: "Неравенство Чебышёва ограничивает:", options: ["Матожидание", "Вероятность отклонения", "Дисперсию"], a: 1 }
+                            ],
+                            difficile: [
+                                { q: "Если V(X)=4, n=100, ε=1. Оценка Чебышёва для среднего:", options: ["≤ 0.04", "≤ 4", "≤ 1"], a: 0 }
+                            ]
+                        }
+                    }
+                ]
+            }
+        };
+
+        // ==========================================
+        // ЛОГИКА ГЕЙМИФИКАЦИИ И СОХРАНЕНИЯ
+        // ==========================================
+        
+        let state = {
+            crystals: 0,
+            mastery: []
+        };
+
+        // Загрузка прогресса с защитой от ошибок
+        function loadProgress() {
+            try {
+                const saved = localStorage.getItem('mathSuperQuest');
+                if (saved) {
+                    const parsed = JSON.parse(saved);
+                    if (parsed && typeof parsed.crystals === 'number') state.crystals = parsed.crystals;
+                    if (parsed && Array.isArray(parsed.mastery)) state.mastery = parsed.mastery;
+                }
+            } catch(e) {
+                console.warn("Не удалось загрузить прогресс, начинаем заново.", e);
+            }
+            updateHUD();
+        }
+
+        // Сохранение прогресса с защитой от ошибок
+        function saveProgress() {
+            try {
+                localStorage.setItem('mathSuperQuest', JSON.stringify(state));
+            } catch(e) {
+                console.warn("Не удалось сохранить прогресс.", e);
+            }
+            updateHUD();
+        }
+
+        // Обновление HUD (интерфейса)
+        function updateHUD() {
+            const crystalsEl = document.getElementById('crystals-display');
+            const masteryEl = document.getElementById('mastery-display');
+            if (crystalsEl) crystalsEl.innerText = state.crystals;
+            if (masteryEl) {
+                const uniqueMastery = new Set(state.mastery);
+                masteryEl.innerText = uniqueMastery.size;
+            }
+        }
+
+        // Добавление кристаллов с анимацией
+        function addCrystals(amount, event) {
+            state.crystals += amount;
+            
+            const anim = document.createElement('div');
+            anim.className = 'crystals-animation';
+            anim.innerText = `+${amount} 💎`;
+            
+            if (event && event.clientX) {
+                anim.style.left = event.clientX + 'px';
+                anim.style.top = event.clientY + 'px';
+            } else {
+                anim.style.left = '50%';
+                anim.style.top = '50%';
+            }
+            
+            document.body.appendChild(anim);
+            setTimeout(() => anim.remove(), 1000);
+
+            saveProgress();
+        }
+
+        // ==========================================
+        // РЕНДЕР КАРТОЧЕК
+        // ==========================================
+
+        function renderApp() {
+            const appContainer = document.getElementById('app-container');
+            if (!appContainer) return;
+
+            appContainer.innerHTML = '';
+            
+            for (const blockKey in curriculum) {
+                const block = curriculum[blockKey];
+                
+                const blockTitle = document.createElement('h2');
+                blockTitle.className = 'block-title';
+                blockTitle.innerText = block.title;
+                appContainer.appendChild(blockTitle);
+
+                const grid = document.createElement('div');
+                grid.className = 'grid';
+
+                block.chapters.forEach(chapter => {
+                    const isMastered = state.mastery.includes(chapter.id);
+                    
+                    const card = document.createElement('div');
+                    card.className = 'card';
+                    
+                    const header = document.createElement('div');
+                    header.className = 'card-header';
+                    header.innerHTML = `<h3>${chapter.title}</h3> ${isMastered ? '<span title="Mastered">🏆</span>' : ''}`;
+                    card.appendChild(header);
+                    
+                    const details = document.createElement('details');
+                    details.innerHTML = `
+                        <summary>📖 Théorie / Теория</summary>
+                        <div class="theory-content">${chapter.theory}</div>
+                    `;
+                    card.appendChild(details);
+
+                    const btn = document.createElement('button');
+                    btn.className = 'btn-quest';
+                    btn.innerHTML = '⚔️ Пройти испытание';
+                    btn.addEventListener('click', (e) => openQuest(chapter.id, e));
+                    card.appendChild(btn);
+
+                    grid.appendChild(card);
+                });
+                appContainer.appendChild(grid);
+            }
+        }
+
+        // ==========================================
+        // ЛОГИКА КВЕСТА (МОДАЛЬНОЕ ОКНО)
+        // ==========================================
+
+        let currentChapter = null;
+        let currentLevel = 'facile';
+        let currentExerciseIndex = 0;
+        let currentExercises = [];
+
+        function findChapterById(id) {
+            for (const block in curriculum) {
+                const found = curriculum[block].chapters.find(c => c.id === id);
+                if (found) return found;
+            }
+            return null;
+        }
+
+        function openQuest(chapterId, event) {
+            currentChapter = findChapterById(chapterId);
+            if (!currentChapter) return;
+
+            currentLevel = 'facile';
+            currentExerciseIndex = 0;
+            
+            document.getElementById('modal-title').innerText = currentChapter.title;
+            document.getElementById('quest-modal').style.display = 'flex';
+            
+            switchLevel('facile'); 
+        }
+
+        function closeQuest() {
+            document.getElementById('quest-modal').style.display = 'none';
+            currentChapter = null;
+        }
+
+        function switchLevel(level) {
+            currentLevel = level;
+            currentExerciseIndex = 0;
+
+            document.querySelectorAll('.level-tab').forEach(tab => {
+                tab.classList.remove('active');
+                if (tab.dataset.level === level) tab.classList.add('active');
+            });
+
+            if (currentChapter && currentChapter.exercises[level]) {
+                currentExercises = currentChapter.exercises[level];
+            } else {
+                currentExercises = [];
+            }
+
+            renderQuestion();
+        }
+
+        function renderQuestion() {
+            const container = document.getElementById('quest-content');
+            container.innerHTML = '';
+
+            if (!currentChapter || currentExercises.length === 0) {
+                container.innerHTML = '<p style="text-align:center; padding: 20px;">Уровень в разработке...</p>';
+                return;
+            }
+
+            if (currentExerciseIndex >= currentExercises.length) {
+                container.innerHTML = `
+                    <div class="question-box" style="text-align:center;">
+                        <h3 style="color: var(--success); margin-bottom: 15px;">🎉 Niveau terminé !</h3>
+                        <p>Вы прошли уровень <strong>${currentLevel}</strong> в теме "${currentChapter.title}".</p>
+                        <button class="action-btn next" onclick="closeQuest()" style="margin-top: 20px;">Вернуться на карту</button>
+                    </div>
+                `;
+                if (currentLevel === 'difficile' && !state.mastery.includes(currentChapter.id)) {
+                    state.mastery.push(currentChapter.id);
+                    saveProgress();
+                    renderApp(); 
+                }
+                return;
+            }
+
+            const ex = currentExercises[currentExerciseIndex];
+
+            const qBox = document.createElement('div');
+            qBox.className = 'question-box';
+            
+            qBox.innerHTML = `
+                <div class="question-header">
+                    <span>Уровень: ${currentLevel}</span>
+                    <span>Задача: ${currentExerciseIndex + 1} / ${currentExercises.length}</span>
+                </div>
+                <div class="question-text">${ex.q}</div>
+            `;
+
+            const optionsBox = document.createElement('div');
+            optionsBox.className = 'options';
+
+            ex.options.forEach((opt, index) => {
+                const btn = document.createElement('button');
+                btn.className = 'option-btn';
+                btn.innerText = opt;
+                btn.addEventListener('click', (e) => checkAnswer(index, ex.a, btn, e, optionsBox));
+                optionsBox.appendChild(btn);
+            });
+
+            qBox.appendChild(optionsBox);
+
+            const feedback = document.createElement('div');
+            feedback.className = 'feedback';
+            feedback.id = 'feedback-box';
+            qBox.appendChild(feedback);
+
+            container.appendChild(qBox);
+        }
+
+        function checkAnswer(selected, correct, btnElement, event, optionsContainer) {
+            const feedback = document.getElementById('feedback-box');
+            const allButtons = optionsContainer.querySelectorAll('.option-btn');
+            
+            allButtons.forEach(b => b.disabled = true);
+
+            if (selected === correct) {
+                btnElement.classList.add('correct');
+                feedback.className = 'feedback success';
+                feedback.innerHTML = '✅ Верно! (Très bien!) +10 💎';
+                
+                addCrystals(10, event);
+                
+                const nextBtn = document.createElement('button');
+                nextBtn.className = 'action-btn next';
+                nextBtn.innerText = (currentExerciseIndex + 1 < currentExercises.length) ? 'Следующая задача ➔' : 'Завершить уровень ➔';
+                nextBtn.onclick = () => {
+                    currentExerciseIndex++;
+                    renderQuestion();
+                };
+                feedback.appendChild(document.createElement('br'));
+                feedback.appendChild(nextBtn);
+
+            } else {
+                btnElement.classList.add('wrong');
+                allButtons[correct].classList.add('correct');
+                
+                feedback.className = 'feedback error';
+                feedback.innerHTML = '❌ Ошибка. Изучите теорию и попробуйте снова.';
+                
+                const retryBtn = document.createElement('button');
+                retryBtn.className = 'action-btn retry';
+                retryBtn.innerText = '🔄 Попробовать снова';
+                retryBtn.onclick = () => {
+                    renderQuestion();
+                };
+                feedback.appendChild(document.createElement('br'));
+                feedback.appendChild(retryBtn);
+            }
+        }
+
+        document.getElementById('quest-modal').addEventListener('click', function(e) {
+            if (e.target === this) closeQuest();
+        });
+
+        // Безопасный запуск после загрузки DOM
+        document.addEventListener('DOMContentLoaded', () => {
+            loadProgress();
+            renderApp();
+        });
+
+    </script>
+</body>
+</html>
